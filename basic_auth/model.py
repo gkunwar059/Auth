@@ -45,6 +45,7 @@ class Users(Base):
     username: Mapped[str] = mapped_column(String, nullable=False, unique=True)
     password: Mapped[str] = mapped_column(String, nullable=False)
 
+
     @staticmethod
     def verify_password(plain_password, hash_password):
         return pwt_context.verify(plain_password, hash_password)

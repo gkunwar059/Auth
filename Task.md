@@ -34,3 +34,14 @@
 - Role-based access control for librarian and anyone who wishes to withdraw books/magazines.
 
 **NOTE:** Until Thursday, your authentication/authorization model should be a standalone system. Integrate that sub-system to Library management system on Friday.
+
+
+
+<!-- role based acess control doocs ariticle is 
+from this i get to know about the role based authentication 
+deal with the circular dependencies and knowes about the dictonaries 
+https://blog.stackademic.com/fastapi-role-base-access-control-with-jwt-9fa2922a088c
+ -->
+
+
+ 

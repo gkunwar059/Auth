@@ -18,16 +18,12 @@ app = FastAPI()
 def authencated_user(creds: HTTPBasicCredentials = Depends(security)):
     username = creds.username
     password = creds.password
-    print(username,password)
-
     return Users.autheticate_user(username=username, password=password)
     
 
 @app.get("/name/{name}", dependencies=[Depends(authencated_user)])
 async def search(name: str):
     return f"Hello {name} G "
-
-
 
 @app.post("/register")
 async def register(register: UserRegister):
