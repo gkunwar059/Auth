@@ -4,11 +4,10 @@ from pydantic import  BaseModel
 from model import User,session
 from auth.jwt_handler import Auth
 from auth.jwt_bearer import JwtBearer
-# from role_check import RoleChecker
+from role_check import RoleChecker
 
 app=FastAPI(title="Token Authentication ")
 
-#pydantic models 
 class RegisterUser(BaseModel):
     email:str
     password:str
@@ -19,16 +18,6 @@ class RegisterUser(BaseModel):
 class LoginUser(BaseModel):
     email:str
     password:str
-
-
-
-# from typing import Annotated
-# from model import User
-# from fastapi import Depends,HTTPException,status
-# from main import get_current_user
-
-
-
 
 
 
@@ -51,39 +40,44 @@ async def login(data:LoginUser):
     else:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,detail="Incorrect email and password !")
         
-# get current user
 
-@app.get("/users/me")
-def get_current_user(token:str=Depends(JwtBearer())):
-    user_email = Auth.decode_generate_token(token)
-    if not user_email:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+
+
+# @app.get("/users/me")
+# def get_current_user(token:str=Depends(JwtBearer())):
+#     user_email = Auth.decode_generate_token(token)
+#     if not user_email:
+#             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
     
-    # Query the database to get the user by email   
-    user=session.query(User).filter_by(email=user_email["email"]).first()
+#     user=session.query(User).filter_by(email=user_email['email']).first()
     
-    if not user:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")  
-     # Return the user's email
-    return{"email":user.email,"role":user.role} 
- 
+#     if not user:
+#             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")  
+#      # Return the user's email and the role
+#     return{"email":user.email,"role":user.role} 
 
 
-#TODO: 1. dependences lagayera validation lagaune , ani authorised bahek le acess na paune , tespaxi ko kam chai current user get garne ho token halera login gareko manxe lai herna milne banaune kam ho ,teti garepaix chai authentication ko part j hos sakeyo
-# TODO:2 yesma chai aba role based rakhdine ho 3 ota different users haru lai rakhdine ho ani vaihalxa aajha ko task 
-#TODO:3 aajha (Teakbreak) baje samma ma chai yo sabai kura sakkaune ho   nearly 4 baje samma garna pahine 
-#TODO: 4 Logger implementation garne ho majjale chai hai ta  (Basic of log implementation garne ho majjale chai )
 
-class RoleChecker:
-    def __init__(self,allowed_roles) :
-        self.allowed_roles=allowed_roles
+
+# class RoleChecker:
+#     def __init__(self,allowed_roles) :
+#         self.allowed_roles=allowed_roles
         
-    def __call__(self,user=Depends(get_current_user)):
-        print(user)
-        if user.get('role') in self.allowed_roles:
-            return True
-        else:
-            raise HTTPException(status_code=401,detail="You don't have enough permissions ")
+#     def __call__(self,user=Depends(get_current_user)):
+        
+#         if user.get('role') in self.allowed_roles:
+#             return True
+        
+#         else:
+#             raise HTTPException(status_code=401,detail="You don't have enough permissions ")
+
+
+
+@app.get("/")
+async def home():
+    return {
+        "Hello Ganesh Kunwar , Welcome to Auth  !!"
+    }
 
 
 @app.get("/name/")
@@ -92,7 +86,7 @@ async def get_name(_:bool=Depends(RoleChecker(allowed_roles=["admin"]))):
     return f"Hello  GoodMorning !"
 
 
+@app.get("/member/")
 
-
-
-
+async def get_member(_:bool=Depends(RoleChecker(allowed_roles=["member"]))):
+    return f"Hello  GoodMorning member bro  !"
