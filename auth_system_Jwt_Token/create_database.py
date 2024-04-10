@@ -1,3 +1,5 @@
-from model import User,Base,MetaData,engine
+from model import User,RolePermission,Role,Permission,Base,MetaData,engine
 
 Base.metadata.create_all(engine)
+
+

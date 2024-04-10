@@ -3,7 +3,7 @@
 from typing_extensions import Annotated, Doc
 from fastapi import Request,HTTPException
 from fastapi.security import HTTPBearer,HTTPAuthorizationCredentials
-from .jwt_handler import Auth
+from auth.jwt_handler import Auth
 
 class JwtBearer(HTTPBearer):  #takes as amain parameter or arg
 

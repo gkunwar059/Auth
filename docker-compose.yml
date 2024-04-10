@@ -1,0 +1,26 @@
+version: '3.9'
+
+services:
+
+  database:
+    image: postgres:latest
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123456789
+      POSTGRES_DB: postgres
+    ports:
+      - "5430:5432"  # Adjust the port if needed
+
+      #
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - "8080:8080"  # Adjust the port if needed
+
+volumes:
+  postgres_data:

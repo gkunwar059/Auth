@@ -1,98 +1,172 @@
-from sqlalchemy import Integer,String,engine,create_engine,MetaData
-from sqlalchemy.orm import DeclarativeBase,Mapped,mapped_column,Session,sessionmaker,session
+from sqlalchemy import Integer, Select, String, engine, create_engine, MetaData, ForeignKey
+from sqlalchemy.orm import (
+    DeclarativeBase,
+    Mapped,
+    mapped_column,
+    Session,
+    sessionmaker,
+    session,
+    relationship
+    
+    
+)
+
 from sqlalchemy.exc import IntegrityError
-# password hashing file 
+
+# password hashing file
 from passlib.context import CryptContext
-from fastapi import Depends, HTTPException,status
+from fastapi import Depends, HTTPException, status
 from typing import Annotated
+
 # from auth_system_Jwt_Token.auth.jwt_bearer import JwtBearer
 # from auth_system_Jwt_Token.auth.jwt_handler import Auth
 from auth.jwt_bearer import JwtBearer
 from auth.jwt_handler import Auth
-# from 
+
+# from
+
 
 class Base(DeclarativeBase):
     pass
 
+
 try:
-    engine=create_engine('postgresql://postgres:123456789@127.0.0.1:5432/postgres',echo=False)
+    engine = create_engine(
+        "postgresql://postgres:123456789@127.0.0.1:5432/postgres", echo=False
+    )
     engine.connect()
     print("connection sucessfull")
-    
-    
+
+
 except Exception as e:
     print("connection problem !")
 
 
 with Session(engine) as session:
-    Session=sessionmaker(bind=engine)
-    session=Session()
-    
-    
-password_context=CryptContext(schemes=["bcrypt"],deprecated="auto")
+    Session = sessionmaker(bind=engine)
+    session = Session()
+
+
+password_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
 
 class User(Base):
-    __tablename__='users'
-    id:Mapped[int]=mapped_column(Integer,primary_key=True)
-    email:Mapped[str]=mapped_column(String,nullable=False,unique=True)
-    password:Mapped[str]=mapped_column(String,nullable=False)
-    role:Mapped[str]=mapped_column(String,default="user",nullable=False)
-    contact:Mapped[int]=mapped_column(Integer,nullable=False)
-    address:Mapped[str]=mapped_column(String,nullable=False)
-    
-    
-    # password hashing 
-    def get_hashed_password(password:str) ->str:
-            return password_context.hash(password)
-    
-    #password hashing
-    def verify_password(password:str,hashed_pass:str)->bool:
-        return password_context.verify(password,hashed_pass)
-    
-    
-    
+    __tablename__ = "userho"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    email: Mapped[str] = mapped_column(String, nullable=False, unique=True)
+    password: Mapped[str] = mapped_column(String, nullable=False)
+    role_id: Mapped[int] = mapped_column(Integer, ForeignKey("roles.id"))
+    roles = relationship("Role", back_populates="users")
+
+    # password hashing
+    def get_hashed_password(password: str) -> str:
+        return password_context.hash(password)
+
+    # password hashing
+    def verify_password(password: str, hashed_pass: str) -> bool:
+        return password_context.verify(password, hashed_pass)
+
     @staticmethod
-    def add_user(email,password,role,contact,address):
-        hashed_password=User.get_hashed_password(password)    #hash the database password while adding 
-        new_user=User(email=email,password=hashed_password,role=role,contact=contact,address=address)
-        
+    def add_user(email, password, role_id):
+        hashed_password = User.get_hashed_password(
+            password
+        )  # hash the database password while adding
+        new_user = User(email=email, password=hashed_password, role_id=role_id)
+
         session.add(new_user)
-        
         try:
             session.commit()
-            return {
-                "detail":"user added sucessfully !"
-            }
-            
+            return {"detail": "user added sucessfully !"}
+
         except IntegrityError:
             session.rollback()
-            raise HTTPException(status_code=status.HTTP_409_CONFLICT,detail="User already exist ")
-    
-    
-    @staticmethod    
-    def get_current_user(token:str=Depends(JwtBearer())):
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT, detail="User already exist "
+            )
+
+    @staticmethod
+    def current_user(token: str = Depends(JwtBearer())):
         user_email = Auth.decode_generate_token(token)
+
         if not user_email:
-                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
-        
-        user=session.query(User).filter_by(email=user_email['email']).first()
-        
+            raise HTTPException(status_code=401, detail="Invalid Token !")
+
+        user = session.query(User).filter_by(email=user_email["email"]).first()
         if not user:
-                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")  
-        # Return the user's email and the role
-        return{"email":user.email,"role":user.role} 
+            raise HTTPException(status_code=401, detail="User not Found !")
 
+        return {"email": user.email, "role": user.role_id}
     
-# class RoleChecker:
-#     def __init__(self,allowed_roles) :
-#         self.allowed_roles=allowed_roles
+    @staticmethod
+    def user_reset_password(email:str,new_password:str):
+        try:
+            user=session.query(User).filter(User.email==email).first()
+            user.password=User.get_hashed_password(new_password)
+            session.commit
+            
+        except Exception:
+            return False
         
-#     def __call__(self,user=Depends(User.get_current_user)):
-        
-#         if user.get('role') in self.allowed_roles:
-#             return True
-        
-#         else:
-#             raise HTTPException(status_code=401,detail="You don't have enough permissions ")
+        return True
+            
 
+
+class RolePermission(Base):
+    __tablename__ = "role_permission"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    role_id: Mapped[int] = mapped_column(Integer, ForeignKey("roles.id"))
+    permission_id: Mapped[int] = mapped_column(Integer, ForeignKey("permissions.id"))
+
+
+class Role(Base):
+    __tablename__ = "roles"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(nullable=False)
+    users = relationship("User", back_populates="roles")
+
+    permissions = relationship(
+        "Permission", secondary="role_permission", back_populates="roles"
+    )
     
+    @staticmethod
+    def get_permission_role(role_id):                                                                                                                 #NOTE:role ma vayeko permission haru lai print garne (role_id ma assign vayeko kura ko chai list of permiison haru rakheko xa )
+        permission_role= session.query(RolePermission).filter_by(role_id=role_id).all()
+        
+        permissions=[]
+        for role in permission_role:
+            permissions.append(Permission.get_name_from_id(role.permission_id))
+            
+        return permissions
+            
+              
+class Permission(Base):
+    __tablename__ = "permissions"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    p_name: Mapped[str] = mapped_column(nullable=False)
+    roles = relationship(
+        "Role", secondary="role_permission", back_populates="permissions"
+    )
+
+    @staticmethod
+    def assign_permission_role(role_id, permission_id):
+        permission = session.query(Permission).get(permission_id)
+        role = session.query(Role).get(role_id)
+
+        if permission and role:
+            role.permissions.append(permission)
+            session.commit()
+            return True
+
+        else:
+            return False
+        
+        
+        
+    @staticmethod 
+    def get_permission(permission_id):                                                                                                 # NOTE:permission id 
+        return session.query(Permission).filter_by(id=permission_id).all()
+    
+    @classmethod
+    def get_name_from_id(cls,permission_id):                                                                                            #NOTE:permission id bata chai name call garne permisison name 
+        return session.scalar(Select(cls.p_name).where(cls.id==permission_id))

@@ -15,7 +15,6 @@ JWT_REFRESH_SECRET_KEY = (
     "14b9f5e27d3c67159ae71bdabf00585c7040249f8aa68f8f90b15931a005d724"
 )
 
-
 class Auth:
 
     @staticmethod
