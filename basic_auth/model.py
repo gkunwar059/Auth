@@ -7,7 +7,7 @@ from sqlalchemy.orm import (
     sessionmaker,
     session,
 )
-from fastapi import HTTPException,status
+from fastapi import HTTPException, status
 from sqlalchemy.exc import IntegrityError
 
 # from decouple import config
@@ -45,7 +45,6 @@ class Users(Base):
     username: Mapped[str] = mapped_column(String, nullable=False, unique=True)
     password: Mapped[str] = mapped_column(String, nullable=False)
 
-
     @staticmethod
     def verify_password(plain_password, hash_password):
         return pwt_context.verify(plain_password, hash_password)
@@ -53,7 +52,6 @@ class Users(Base):
     @staticmethod
     def get_password_hash(password):
         return pwt_context.hash(password)
-    
 
     @staticmethod
     def add_user(username, password):
@@ -61,24 +59,26 @@ class Users(Base):
         new_member = Users(
             username=username, password=hash_password
         )  # thinks to remember the concept and implementations
-        
+
         session.add(new_member)
-      
-        # uniquee value integrity deals with the duplicate value 
+
+        # uniquee value integrity deals with the duplicate value
         try:
             session.commit()
-        except IntegrityError :
+        except IntegrityError:
             session.rollback()
-            raise HTTPException(status_code=status.HTTP_409_CONFLICT,detail="Username already exists!")
-   
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT, detail="Username already exists!"
+            )
+
     @staticmethod
     def autheticate_user(username, password):
         user = session.query(Users).filter_by(username=username).first()
-        
-        if user and Users.verify_password(password,user.password):        #verify garne kam garxa ke hash vayeko password na normal password lai 
+
+        if user and Users.verify_password(
+            password, user.password
+        ):  # verify garne kam garxa ke hash vayeko password na normal password lai
             return user
-        
+
         else:
-            raise HTTPException(status_code=401,detail="invalid credientials !")
-
-
+            raise HTTPException(status_code=401, detail="invalid credientials !")

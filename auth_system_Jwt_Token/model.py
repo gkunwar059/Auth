@@ -1,4 +1,12 @@
-from sqlalchemy import Integer, Select, String, engine, create_engine, MetaData, ForeignKey
+from sqlalchemy import (
+    Integer,
+    Select,
+    String,
+    engine,
+    create_engine,
+    MetaData,
+    ForeignKey,
+)
 from sqlalchemy.orm import (
     DeclarativeBase,
     Mapped,
@@ -6,9 +14,7 @@ from sqlalchemy.orm import (
     Session,
     sessionmaker,
     session,
-    relationship
-    
-    
+    relationship,
 )
 
 from sqlalchemy.exc import IntegrityError
@@ -23,7 +29,41 @@ from typing import Annotated
 from auth.jwt_bearer import JwtBearer
 from auth.jwt_handler import Auth
 
-# from
+# for the logger in python
+from fastapi import FastAPI, status, Request, Response
+from typing import Any
+import json  # For JSON serialization
+
+# configuring logging
+import logging
+
+logger = logging.getLogger(
+    __name__
+)  # Adjusting logging level as need (eg:DEBUG for more details )
+
+logger.setLevel(logging.INFO)
+handler = logging.StreamHandler()  # log the console by default
+formatter = logging.Formatter("%(asctime)s-%(levelname)s-%(message)s")
+handler.setFormatter(formatter)
+logger.addHandler(handler)
+
+
+# =============================IMPORTANT LOGGER CONCEPT IN FASTAPI ===============================
+
+
+async def log_request_response(request: Request, response: Response, data: Any):
+    """Logs request and response details for a FastAPI endpoint."""
+    logger.info(f"---Request---")
+    logger.info(f"Method:{request.method}")
+    logger.info(f"URL:{request.url}")
+
+    # log response details
+    logger.info(f"---Response ---")
+    logger.info(f"Status code :{response.status_code}")
+    logger.info(f"Response data :{data}")
+
+
+# ===================================================================================================
 
 
 class Base(DeclarativeBase):
@@ -76,6 +116,7 @@ class User(Base):
         session.add(new_user)
         try:
             session.commit()
+
             return {"detail": "user added sucessfully !"}
 
         except IntegrityError:
@@ -96,19 +137,18 @@ class User(Base):
             raise HTTPException(status_code=401, detail="User not Found !")
 
         return {"email": user.email, "role": user.role_id}
-    
+
     @staticmethod
-    def user_reset_password(email:str,new_password:str):
+    def user_reset_password(email: str, new_password: str):
         try:
-            user=session.query(User).filter(User.email==email).first()
-            user.password=User.get_hashed_password(new_password)
+            user = session.query(User).filter(User.email == email).first()
+            user.password = User.get_hashed_password(new_password)
             session.commit
-            
+
         except Exception:
             return False
-        
+
         return True
-            
 
 
 class RolePermission(Base):
@@ -127,18 +167,20 @@ class Role(Base):
     permissions = relationship(
         "Permission", secondary="role_permission", back_populates="roles"
     )
-    
+
     @staticmethod
-    def get_permission_role(role_id):                                                                                                                 #NOTE:role ma vayeko permission haru lai print garne (role_id ma assign vayeko kura ko chai list of permiison haru rakheko xa )
-        permission_role= session.query(RolePermission).filter_by(role_id=role_id).all()
-        
-        permissions=[]
+    def get_permission_role(
+        role_id,
+    ):  # NOTE:role ma vayeko permission haru lai print garne (role_id ma assign vayeko kura ko chai list of permiison haru rakheko xa )
+        permission_role = session.query(RolePermission).filter_by(role_id=role_id).all()
+
+        permissions = []
         for role in permission_role:
             permissions.append(Permission.get_name_from_id(role.permission_id))
-            
+
         return permissions
-            
-              
+
+
 class Permission(Base):
     __tablename__ = "permissions"
 
@@ -160,13 +202,13 @@ class Permission(Base):
 
         else:
             return False
-        
-        
-        
-    @staticmethod 
-    def get_permission(permission_id):                                                                                                 # NOTE:permission id 
+
+    @staticmethod
+    def get_permission(permission_id):  # NOTE:permission id
         return session.query(Permission).filter_by(id=permission_id).all()
-    
+
     @classmethod
-    def get_name_from_id(cls,permission_id):                                                                                            #NOTE:permission id bata chai name call garne permisison name 
-        return session.scalar(Select(cls.p_name).where(cls.id==permission_id))
+    def get_name_from_id(
+        cls, permission_id
+    ):  # NOTE:permission id bata chai name call garne permisison name
+        return session.scalar(Select(cls.p_name).where(cls.id == permission_id))

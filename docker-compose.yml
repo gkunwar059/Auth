@@ -11,7 +11,6 @@ services:
       POSTGRES_DB: postgres
     ports:
       - "5430:5432"  # Adjust the port if needed
-
       #
     volumes:
       - postgres_data:/var/lib/postgresql/data
