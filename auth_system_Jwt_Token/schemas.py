@@ -1,8 +1,10 @@
 from pydantic import BaseModel, Field
 
+
 class RegisterUser(BaseModel):
     email: str
     password: str
+    images: str
     role_id: str
 
 
@@ -21,9 +23,9 @@ class RoleAssignPermission(BaseModel):
 
 
 class ForgetPassword(BaseModel):
-    email:str
-    
-    
+    email: str
+
+
 class UserChangePassword(BaseModel):
-    old_password:str
-    new_password:str
+    old_password: str
+    new_password: str

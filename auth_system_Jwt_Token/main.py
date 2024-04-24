@@ -13,6 +13,7 @@ from schemas import (
     ForgetPassword,
     UserChangePassword,
 )
+
 import uuid
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
@@ -36,7 +37,10 @@ templates = Jinja2Templates(directory=templates_path)
 async def register(signin: RegisterUser, request: Request):
 
     new_user = User.add_user(
-        email=signin.email, password=signin.password, role_id=signin.role_id
+        email=signin.email,
+        images=signin.images,
+        password=signin.password,
+        role_id=signin.role_id,
     )
     await log_request_response(
         request, Response(status_code=status.HTTP_201_CREATED), data=new_user

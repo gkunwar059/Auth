@@ -91,10 +91,11 @@ password_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 class User(Base):
-    __tablename__ = "userho"
+    __tablename__ = "testuser"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     email: Mapped[str] = mapped_column(String, nullable=False, unique=True)
     password: Mapped[str] = mapped_column(String, nullable=False)
+    images: Mapped[str] = mapped_column(String, nullable=False)
     role_id: Mapped[int] = mapped_column(Integer, ForeignKey("roles.id"))
     roles = relationship("Role", back_populates="users")
 
@@ -107,11 +108,13 @@ class User(Base):
         return password_context.verify(password, hashed_pass)
 
     @staticmethod
-    def add_user(email, password, role_id):
+    def add_user(email, password, images, role_id):
         hashed_password = User.get_hashed_password(
             password
         )  # hash the database password while adding
-        new_user = User(email=email, password=hashed_password, role_id=role_id)
+        new_user = User(
+            email=email, images=images, password=hashed_password, role_id=role_id
+        )
 
         session.add(new_user)
         try:
