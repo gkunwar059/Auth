@@ -50,3 +50,7 @@ if __name__ == "__main__":
 
 # ===========start the minio server =============================IMPORTANT TOPIC
 # sudo systemctl start minio.services
+
+
+# RESOURCES FOR THE FILE UPLOADER
+# https://min.io/docs/minio/linux/developers/python/minio-py.html
